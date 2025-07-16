@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Clickverso Infinito: Modo Misiones</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle, #0d1b2a, #000);
+      color: white;
+      text-align: center;
+      overflow-x: hidden;
+    }
+    h1 {
+      font-size: 3em;
+      color: #6fffe9;
+      margin-top: 20px;
+    }
+    #score {
+      font-size: 2em;
+      margin-bottom: 10px;
+      color: #90e0ef;
+    }
+    #click-btn {
+      margin: 20px;
+      padding: 20px 40px;
+      font-size: 1.5em;
+      background: linear-gradient(145deg, #1a2a3a, #0f1927);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #6fffe9;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    #click-btn:active {
+      transform: translate(-3px, 3px) rotate(-3deg);
+      box-shadow: 0 0 40px #00f5ff;
+    }
+    .panel {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      padding: 20px;
+    }
+    .section {
+      width: 45%;
+      background-color: #132238;
+      padding: 15px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px #6fffe9;
+      margin: 10px;
+    }
+    .section h2 {
+      color: #6fffe9;
+    }
+    .card {
+      background-color: #0d1b2a;
+      margin: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px #3fffd2;
+    }
+    .card button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background-color: #3fffd2;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .card.completed {
+      opacity: 0.5;
+      box-shadow: none;
+    }
+    .meme {
+      position: fixed;
+      top: 20%;
+      width: 100px;
+      z-index: 9999;
+      animation: moveMeme 4s linear forwards;
+    }
+    @keyframes moveMeme {
+      from { right: -150px; }
+      to { right: 100vw; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Clickverso Infinito</h1>
+  <div id="score">Clics: 0</div>
+  <button id="click-btn" onclick="handleClick()">✨ ¡Haz clic! ✨</button>
+
+  <audio id="click-sound" preload="auto"></audio>
+  <audio id="mouse-click" src="https://assets.mixkit.co/sfx/download/mixkit-mouse-click-1122.wav" preload="auto"></audio>
+
+  <div class="panel">
+    <!-- Panel de poderes -->
+    <div class="section">
+      <h2>Poderes</h2>
+      <div id="power-panel"></div>
+    </div>
+
+    <!-- Panel de misiones -->
+    <div class="section">
+      <h2>Misiones</h2>
+      <div id="mission-panel"></div>
+    </div>
+  </div>
+<script>
+  let clicks = 0;
+  let multiplier = 1;
+  const ownedPowers = {};
+  const missions = {
+    "100clicks": {
+      name: "Primeros 100 clics",
+      description: "Haz 100 clics totales.",
+      goal: 100,
+      current: 0,
+      completed: false,
+      claimed: false
+    },
+    "firstPower": {
+      name: "Poder activado",
+      description: "Compra tu primer poder.",
+      goal: 1,
+      current: 0,
+      completed: false,
+      claimed: false
+    },
+    "memeMission": {
+      name: "QUE ERA ESO",
+      description: "Descubre el extraño meme perdido en el espacio.",
+      goal: 1,
+      current: 0,
+      completed: false,
+      claimed: false
+    }
+  };
+
+  function handleClick() {
+    clicks += multiplier;
+    document.getElementById("score").textContent = `Clics: ${clicks}`;
+
+    // Reproducir sonido
+    const clickSound = document.getElementById("click-sound");
+    const mouseClick = document.getElementById("mouse-click");
+    mouseClick.currentTime = 0;
+    mouseClick.play();
+
+    // Actualizar misiones
+    if (!missions["100clicks"].completed) {
+      missions["100clicks"].current = clicks;
+      if (clicks >= missions["100clicks"].goal) {
+        missions["100clicks"].completed = true;
+        alert("✅ COMPLETASTE LA MISIÓN: Primeros 100 clics");
+      }
+    }
+
+    // Evento meme (una sola vez)
+    if (!missions["memeMission"].completed && clicks >= 70) {
+      const chance = Math.random();
+      if (chance <= 0.00005) {
+        missions["memeMission"].current = 1;
+        missions["memeMission"].completed = true;
+        alert("✅ COMPLETASTE LA MISIÓN: QUE ERA ESO");
+
+        const meme = document.createElement("img");
+        meme.src = "https://media.tenor.com/JhXLHG-Do5UAAAAd/smurf-cat-smurf.gif"; // meme ejemplo
+        meme.className = "meme";
+        document.body.appendChild(meme);
+        setTimeout(() => meme.remove(), 4000);
+      }
+    }
+
+    updatePanels();
+  }
+
+  function buyPower(price, value, label) {
+    if (clicks >= price && (multiplier < value)) {
+      clicks -= price;
+      multiplier = value;
+      ownedPowers[label] = true;
+
+      if (!missions["firstPower"].completed) {
+        missions["firstPower"].current = 1;
+        missions["firstPower"].completed = true;
+        alert("✅ COMPLETASTE LA MISIÓN: Poder activado");
+      }
+
+      updatePanels();
+    } else {
+      alert("No puedes activar este poder aún.");
+    }
+  }
+
+  function completeMission(key) {
+    const m = missions[key];
+    if (m.completed && !m.claimed) {
+      m.claimed = true;
+      alert("ERES UN CAMPEÓN, SIGUE COMPLETANDO MISIONES Y LOGRARÁS SER DE LOS MEJORES DEL JUEGO. Y ESO NO QUITA TUS PROPIAS METAS EN ESTE JUEGO.");
+      updatePanels();
+    }
+  }
+
+  function updatePanels() {
+    const powers = [
+      { label: "x2", value: 2, price: 100 },
+      { label: "x4", value: 4, price: 250 },
+      { label: "x6", value: 6, price: 500 },
+      { label: "x8", value: 8, price: 800 },
+      { label: "x10", value: 10, price: 1200 },
+      { label: "x20", value: 20, price: 3000 }
+    ];
+
+    const powerPanel = document.getElementById("power-panel");
+    powerPanel.innerHTML = "";
+    powers.forEach(p => {
+      const btn = document.createElement("button");
+      btn.textContent = `${p.label} — ${p.price} clics`;
+      btn.disabled = multiplier >= p.value || clicks < p.price;
+      btn.onclick = () => buyPower(p.price, p.value, p.label);
+      const card = document.createElement("div");
+      card.className = "card";
+      card.appendChild(document.createTextNode(`Multiplicador ${p.label}`));
+      card.appendChild(document.createElement("br"));
+      card.appendChild(btn);
+      powerPanel.appendChild(card);
+    });
+
+    const missionPanel = document.getElementById("mission-panel");
+    missionPanel.innerHTML = "";
+    Object.keys(missions).forEach(k => {
+      const m = missions[k];
+      const card = document.createElement("div");
+      card.className = "card";
+      if (m.claimed) card.classList.add("completed");
+      card.innerHTML = `<strong>${m.name}</strong><br>${m.description}<br>`;
+      if (m.completed && !m.claimed) {
+        const btn = document.createElement("button");
+        btn.textContent = "COMPLETAR";
+        btn.onclick = () => completeMission(k);
+        card.appendChild(btn);
+      } else if (m.claimed) {
+        card.innerHTML += `<em>✅ Canjeado</em>`;
+      } else {
+        card.innerHTML += `<em>${m.current}/${m.goal}</em>`;
+      }
+      missionPanel.appendChild(card);
+    });
+
+    document.getElementById("score").textContent = `Clics: ${clicks}`;
+  }
+
+  updatePanels();
+</script>
+</body>
+</html>
